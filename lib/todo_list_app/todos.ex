@@ -8,6 +8,7 @@ defmodule TodoListApp.Todos do
 
   alias TodoListApp.Todos.Task
   alias TodoListApp.Accounts.Scope
+  alias TodoListApp.Todos.Tag
 
   # Optional: keep PubSub if you still use scope notifications
   # def subscribe_tasks(%Scope{} = scope) do
@@ -57,33 +58,92 @@ defmodule TodoListApp.Todos do
   Gets a single task.
   Raises `Ecto.NoResultsError` if not found.
   """
-  def get_task!(_scope, id) do
-    Repo.get!(Task, id)
+  # def get_task!(_scope, id) do
+  #   Repo.get!(Task, id)
+  # end
+  def get_task!(scope, id) do
+    user_id = scope.user.id
+    Repo.get_by!(Task, id: id, creator_id: user_id)
   end
 
   @doc """
   Creates a task.
   """
-  def create_task(_scope, attrs) do
-    with {:ok, task = %Task{}} <-
-           %Task{}
-           |> Task.changeset(attrs)
-           |> Repo.insert() do
-      broadcast_task(nil, {:created, task})
-      {:ok, task}
+
+  # def create_task(_scope, attrs) do
+  #   with {:ok, task = %Task{}} <-
+  #          %Task{}
+  #          |> Task.changeset(attrs)
+  #          |> Repo.insert() do
+  #     broadcast_task(nil, {:created, task})
+  #     {:ok, task}
+  #   end
+  # end
+
+  def create_task(%Scope{} = scope, attrs) do
+    user_id = scope.user.id
+    attrs = Map.put(attrs, "creator_id", user_id)
+
+    tag_names = Map.get(attrs, "tag_names", [])
+    tags = get_or_create_tags(tag_names)
+
+    assignee_ids = Map.get(attrs, "assignee_ids", [])
+    assignees = TodoListApp.Accounts.list_users_by_ids(assignee_ids)
+
+    %Task{}
+    |> Task.changeset(attrs)
+    |> Ecto.Changeset.put_assoc(:tags, tags)
+    |> Ecto.Changeset.put_assoc(:assignees, assignees)
+    |> Repo.insert()
+    |> case do
+      {:ok, task} ->
+        broadcast_task(scope, {:created, task})
+        {:ok, task}
+
+      error ->
+        error
     end
+  end
+
+  defp get_or_create_tags([]), do: []
+
+  defp get_or_create_tags(names) do
+    Enum.map(names, fn name ->
+      slug =
+        name
+        |> String.downcase()
+        |> String.replace(~r/[^\w-]+/u, "-")
+        |> String.trim("-")
+
+      Repo.get_by(Tag, name: name) ||
+        Repo.insert!(%Tag{name: name, slug: slug})
+    end)
   end
 
   @doc """
   Updates a task.
   """
   def update_task(_scope, %Task{} = task, attrs) do
-    with {:ok, task = %Task{}} <-
-           task
-           |> Task.changeset(attrs)
-           |> Repo.update() do
-      broadcast_task(nil, {:updated, task})
-      {:ok, task}
+    tag_names = Map.get(attrs, "tag_names", [])
+    tags = get_or_create_tags(tag_names)
+
+    assignee_ids = Map.get(attrs, "assignee_ids", [])
+    assignees = TodoListApp.Accounts.list_users_by_ids(assignee_ids)
+
+    task = Repo.preload(task, [:tags, :assignees])
+
+    task
+    |> Task.changeset(attrs)
+    |> Ecto.Changeset.put_assoc(:tags, tags)
+    |> Ecto.Changeset.put_assoc(:assignees, assignees)
+    |> Repo.update()
+    |> case do
+      {:ok, task} ->
+        broadcast_task(nil, {:updated, task})
+        {:ok, task}
+
+      error ->
+        error
     end
   end
 

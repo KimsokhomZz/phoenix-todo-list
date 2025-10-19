@@ -28,7 +28,10 @@ defmodule TodoListApp.Todos.Task do
 
     belongs_to :creator, TodoListApp.Accounts.User
 
-    many_to_many :tags, TodoListApp.Todos.Tag, join_through: "task_tags", on_replace: :delete
+    many_to_many :tags, TodoListApp.Todos.Tag,
+      join_through: TodoListApp.Todos.TaskTag,
+      on_replace: :delete
+
     many_to_many :assignees, TodoListApp.Accounts.User,
       join_through: "task_assignments",
       on_replace: :delete
@@ -38,7 +41,7 @@ defmodule TodoListApp.Todos.Task do
 
   def changeset(task, attrs) do
     task
-    |> cast(attrs, [:title, :description, :due_date, :status])
+    |> cast(attrs, [:title, :description, :due_date, :status, :creator_id])
     |> validate_required([:title, :status])
   end
 end

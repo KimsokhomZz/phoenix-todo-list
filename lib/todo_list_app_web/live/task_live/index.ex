@@ -10,7 +10,7 @@ defmodule TodoListAppWeb.TaskLive.Index do
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <div class="mb-4">
         <.form for={%{}} phx-submit="search">
-          <.input name="tags" label="Filter by tags (comma separated)" />
+          <.input name="tags" label="Filter by tags (comma separated)" value="" />
           <div class="mt-2">
             <.button>Filter</.button>
           </div>
@@ -85,7 +85,8 @@ defmodule TodoListAppWeb.TaskLive.Index do
 
     # Pass current_scope for filtering, update as needed for your context
     tasks = TodoListApp.Todos.list_tasks(%{tags: tags, scope: socket.assigns.current_scope})
-    {:noreply, assign(socket, :tasks, tasks)}
+    # {:noreply, assign(socket, :tasks, tasks)}
+    {:noreply, stream(socket, :tasks, tasks, reset: true)}
   end
 
   @impl true
@@ -97,6 +98,4 @@ defmodule TodoListAppWeb.TaskLive.Index do
   defp list_tasks(current_scope) do
     Todos.list_tasks(current_scope)
   end
-
-
 end

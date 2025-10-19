@@ -23,7 +23,7 @@ defmodule TodoListApp.Todos.Tag do
   schema "tags" do
     field :name, :string
     field :slug, :string
-    many_to_many :tasks, TodoListApp.Todos.Task, join_through: "task_tags"
+    many_to_many :tasks, TodoListApp.Todos.Task, join_through: TodoListApp.Todos.TaskTag
 
     timestamps(type: :utc_datetime)
   end

@@ -10,6 +10,8 @@ defmodule TodoListApp.Accounts.User do
     field :authenticated_at, :utc_datetime, virtual: true
 
     timestamps(type: :utc_datetime)
+
+    many_to_many :assigned_tasks, TodoListApp.Todos.Task, join_through: "task_assignments"
   end
 
   @doc """

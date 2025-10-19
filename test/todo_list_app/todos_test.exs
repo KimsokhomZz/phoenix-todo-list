@@ -29,7 +29,13 @@ defmodule TodoListApp.TodosTest do
     end
 
     test "create_task/2 with valid data creates a task" do
-      valid_attrs = %{status: "some status", description: "some description", title: "some title", due_date: ~D[2025-10-16]}
+      valid_attrs = %{
+        status: "some status",
+        description: "some description",
+        title: "some title",
+        due_date: ~D[2025-10-16]
+      }
+
       scope = user_scope_fixture()
 
       assert {:ok, %Task{} = task} = Todos.create_task(scope, valid_attrs)
@@ -48,7 +54,13 @@ defmodule TodoListApp.TodosTest do
     test "update_task/3 with valid data updates the task" do
       scope = user_scope_fixture()
       task = task_fixture(scope)
-      update_attrs = %{status: "some updated status", description: "some updated description", title: "some updated title", due_date: ~D[2025-10-17]}
+
+      update_attrs = %{
+        status: "some updated status",
+        description: "some updated description",
+        title: "some updated title",
+        due_date: ~D[2025-10-17]
+      }
 
       assert {:ok, %Task{} = task} = Todos.update_task(scope, task, update_attrs)
       assert task.status == "some updated status"

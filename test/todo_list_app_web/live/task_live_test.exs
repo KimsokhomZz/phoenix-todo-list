@@ -4,8 +4,18 @@ defmodule TodoListAppWeb.TaskLiveTest do
   import Phoenix.LiveViewTest
   import TodoListApp.TodosFixtures
 
-  @create_attrs %{status: "some status", description: "some description", title: "some title", due_date: "2025-10-16"}
-  @update_attrs %{status: "some updated status", description: "some updated description", title: "some updated title", due_date: "2025-10-17"}
+  @create_attrs %{
+    status: "some status",
+    description: "some description",
+    title: "some title",
+    due_date: "2025-10-16"
+  }
+  @update_attrs %{
+    status: "some updated status",
+    description: "some updated description",
+    title: "some updated title",
+    due_date: "2025-10-17"
+  }
   @invalid_attrs %{status: nil, description: nil, title: nil, due_date: nil}
 
   setup :register_and_log_in_user

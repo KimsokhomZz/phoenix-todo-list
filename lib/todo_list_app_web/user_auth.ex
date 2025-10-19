@@ -258,11 +258,13 @@ defmodule TodoListAppWeb.UserAuth do
 
   @doc "Returns the path to redirect to after log in."
   # the user was already logged in, redirect to settings
-  def signed_in_path(%Plug.Conn{assigns: %{current_scope: %Scope{user: %Accounts.User{}}}}) do
-    ~p"/users/settings"
-  end
+  # def signed_in_path(%Plug.Conn{assigns: %{current_scope: %Scope{user: %Accounts.User{}}}}) do
+  #   # ~p"/users/settings"
+  #   ~p"/tasks"
+  # end
+  def signed_in_path(_conn), do: ~p"/tasks"
 
-  def signed_in_path(_), do: ~p"/"
+  # def signed_in_path(_), do: ~p"/"
 
   @doc """
   Plug for routes that require the user to be authenticated.

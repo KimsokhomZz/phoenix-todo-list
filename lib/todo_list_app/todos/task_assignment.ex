@@ -3,7 +3,6 @@ defmodule TodoListApp.Todos.TaskAssignment do
   import Ecto.Changeset
 
   schema "task_assignments" do
-
     field :task_id, :id
     field :user_id, :id
 

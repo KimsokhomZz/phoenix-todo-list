@@ -28,6 +28,10 @@ defmodule TodoListApp.Accounts do
 
   def list_users, do: TodoListApp.Repo.all(TodoListApp.Accounts.User)
 
+  def list_users_by_ids(ids) do
+    Repo.all(from u in User, where: u.id in ^ids)
+  end
+
   @doc """
   Gets a user by email and password.
 
