@@ -1,5 +1,6 @@
 defmodule TodoListAppWeb.TaskLive.Index do
   use TodoListAppWeb, :live_view
+  import TodoListAppWeb.CoreComponents
 
   alias TodoListApp.Todos
 
@@ -7,6 +8,15 @@ defmodule TodoListAppWeb.TaskLive.Index do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
+      <div class="mb-4">
+        <.form for={%{}} phx-submit="search">
+          <.input name="tags" label="Filter by tags (comma separated)" />
+          <div class="mt-2">
+            <.button>Filter</.button>
+          </div>
+        </.form>
+      </div>
+
       <.header>
         Listing Tasks
         <:actions>
@@ -47,7 +57,8 @@ defmodule TodoListAppWeb.TaskLive.Index do
   @impl true
   def mount(_params, _session, socket) do
     if connected?(socket) do
-      Todos.subscribe_tasks(socket.assigns.current_scope)
+      # Todos.subscribe_tasks(socket.assigns.current_scope)
+      Todos.subscribe_tasks()
     end
 
     {:ok,
@@ -65,6 +76,19 @@ defmodule TodoListAppWeb.TaskLive.Index do
   end
 
   @impl true
+  def handle_event("search", %{"tags" => tags_str}, socket) do
+    tags =
+      tags_str
+      |> String.split(",")
+      |> Enum.map(&String.trim/1)
+      |> Enum.reject(&(&1 == ""))
+
+    # Pass current_scope for filtering, update as needed for your context
+    tasks = TodoListApp.Todos.list_tasks(%{tags: tags, scope: socket.assigns.current_scope})
+    {:noreply, assign(socket, :tasks, tasks)}
+  end
+
+  @impl true
   def handle_info({type, %TodoListApp.Todos.Task{}}, socket)
       when type in [:created, :updated, :deleted] do
     {:noreply, stream(socket, :tasks, list_tasks(socket.assigns.current_scope), reset: true)}
@@ -73,4 +97,6 @@ defmodule TodoListAppWeb.TaskLive.Index do
   defp list_tasks(current_scope) do
     Todos.list_tasks(current_scope)
   end
+
+
 end

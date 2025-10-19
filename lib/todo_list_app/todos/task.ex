@@ -24,12 +24,12 @@ defmodule TodoListApp.Todos.Task do
     field :title, :string
     field :description, :string
     field :due_date, :date
-
     field :status, Ecto.Enum, values: [:todo, :in_progress, :done], default: :todo
 
-    many_to_many :tags, TodoApp.Todos.Tag, join_through: "task_tags", on_replace: :delete
+    belongs_to :creator, TodoListApp.Accounts.User
 
-    many_to_many :assignees, TodoApp.Accounts.User,
+    many_to_many :tags, TodoListApp.Todos.Tag, join_through: "task_tags", on_replace: :delete
+    many_to_many :assignees, TodoListApp.Accounts.User,
       join_through: "task_assignments",
       on_replace: :delete
 

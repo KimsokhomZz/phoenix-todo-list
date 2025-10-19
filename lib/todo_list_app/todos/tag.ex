@@ -19,11 +19,11 @@ defmodule TodoListApp.Todos.Tag do
   #   |> unique_constraint(:name)
   #   |> put_change(:user_id, user_scope.user.id)
   # end
-  
+
   schema "tags" do
     field :name, :string
     field :slug, :string
-    many_to_many :tasks, TodoApp.Todos.Task, join_through: "task_tags"
+    many_to_many :tasks, TodoListApp.Todos.Task, join_through: "task_tags"
 
     timestamps(type: :utc_datetime)
   end

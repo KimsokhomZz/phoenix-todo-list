@@ -9,139 +9,98 @@ defmodule TodoListApp.Todos do
   alias TodoListApp.Todos.Task
   alias TodoListApp.Accounts.Scope
 
-  @doc """
-  Subscribes to scoped notifications about any task changes.
-
-  The broadcasted messages match the pattern:
-
-    * {:created, %Task{}}
-    * {:updated, %Task{}}
-    * {:deleted, %Task{}}
-
-  """
-  def subscribe_tasks(%Scope{} = scope) do
-    key = scope.user.id
-
-    Phoenix.PubSub.subscribe(TodoListApp.PubSub, "user:#{key}:tasks")
+  # Optional: keep PubSub if you still use scope notifications
+  # def subscribe_tasks(%Scope{} = scope) do
+  #   Phoenix.PubSub.subscribe(TodoListApp.PubSub, "tasks")
+  # end
+  def subscribe_tasks do
+    Phoenix.PubSub.subscribe(TodoListApp.PubSub, "tasks")
   end
 
-  defp broadcast_task(%Scope{} = scope, message) do
-    key = scope.user.id
-
-    Phoenix.PubSub.broadcast(TodoListApp.PubSub, "user:#{key}:tasks", message)
+  defp broadcast_task(_scope, message) do
+    Phoenix.PubSub.broadcast(TodoListApp.PubSub, "tasks", message)
   end
 
   @doc """
   Returns the list of tasks.
-
-  ## Examples
-
-      iex> list_tasks(scope)
-      [%Task{}, ...]
-
   """
   def list_tasks(%Scope{} = scope) do
-    Repo.all_by(Task, user_id: scope.user.id)
+    user_id = scope.user.id
+
+    Repo.all(
+      from t in Task,
+        left_join: a in assoc(t, :assignees),
+        where: a.id == ^user_id or t.creator_id == ^user_id,
+        preload: [:assignees, :tags]
+    )
+  end
+
+  #  For filtering by tags (with scope param passing)
+  def list_tasks(%{tags: tags, scope: %Scope{} = scope}) when is_list(tags) do
+    user_id = scope.user.id
+
+    from(t in Task,
+      left_join: tt in "task_tags",
+      on: tt.task_id == t.id,
+      left_join: tag in "tags",
+      on: tag.id == tt.tag_id,
+      left_join: a in assoc(t, :assignees),
+      where: a.id == ^user_id or t.creator_id == ^user_id,
+      where: tag.name in ^tags,
+      preload: [:tags, :assignees],
+      distinct: true
+    )
+    |> Repo.all()
   end
 
   @doc """
   Gets a single task.
-
-  Raises `Ecto.NoResultsError` if the Task does not exist.
-
-  ## Examples
-
-      iex> get_task!(scope, 123)
-      %Task{}
-
-      iex> get_task!(scope, 456)
-      ** (Ecto.NoResultsError)
-
+  Raises `Ecto.NoResultsError` if not found.
   """
-  def get_task!(%Scope{} = scope, id) do
-    Repo.get_by!(Task, id: id, user_id: scope.user.id)
+  def get_task!(_scope, id) do
+    Repo.get!(Task, id)
   end
 
   @doc """
   Creates a task.
-
-  ## Examples
-
-      iex> create_task(scope, %{field: value})
-      {:ok, %Task{}}
-
-      iex> create_task(scope, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
   """
-  def create_task(%Scope{} = scope, attrs) do
+  def create_task(_scope, attrs) do
     with {:ok, task = %Task{}} <-
            %Task{}
-           |> Task.changeset(attrs, scope)
+           |> Task.changeset(attrs)
            |> Repo.insert() do
-      broadcast_task(scope, {:created, task})
+      broadcast_task(nil, {:created, task})
       {:ok, task}
     end
   end
 
   @doc """
   Updates a task.
-
-  ## Examples
-
-      iex> update_task(scope, task, %{field: new_value})
-      {:ok, %Task{}}
-
-      iex> update_task(scope, task, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
   """
-  def update_task(%Scope{} = scope, %Task{} = task, attrs) do
-    true = task.user_id == scope.user.id
-
+  def update_task(_scope, %Task{} = task, attrs) do
     with {:ok, task = %Task{}} <-
            task
-           |> Task.changeset(attrs, scope)
+           |> Task.changeset(attrs)
            |> Repo.update() do
-      broadcast_task(scope, {:updated, task})
+      broadcast_task(nil, {:updated, task})
       {:ok, task}
     end
   end
 
   @doc """
   Deletes a task.
-
-  ## Examples
-
-      iex> delete_task(scope, task)
-      {:ok, %Task{}}
-
-      iex> delete_task(scope, task)
-      {:error, %Ecto.Changeset{}}
-
   """
-  def delete_task(%Scope{} = scope, %Task{} = task) do
-    true = task.user_id == scope.user.id
-
-    with {:ok, task = %Task{}} <-
-           Repo.delete(task) do
-      broadcast_task(scope, {:deleted, task})
+  def delete_task(_scope, %Task{} = task) do
+    with {:ok, task = %Task{}} <- Repo.delete(task) do
+      broadcast_task(nil, {:deleted, task})
       {:ok, task}
     end
   end
 
   @doc """
-  Returns an `%Ecto.Changeset{}` for tracking task changes.
-
-  ## Examples
-
-      iex> change_task(scope, task)
-      %Ecto.Changeset{data: %Task{}}
-
+  Returns a changeset for editing/validation.
   """
-  def change_task(%Scope{} = scope, %Task{} = task, attrs \\ %{}) do
-    true = task.user_id == scope.user.id
-
-    Task.changeset(task, attrs, scope)
+  def change_task(_scope, %Task{} = task, attrs \\ %{}) do
+    Task.changeset(task, attrs)
   end
 end

@@ -48,7 +48,8 @@ defmodule TodoListAppWeb.TaskLive.Form do
   end
 
   defp apply_action(socket, :new, _params) do
-    task = %Task{user_id: socket.assigns.current_scope.user.id}
+    # task = %Task{user_id: socket.assigns.current_scope.user.id}
+    task = %Task{}
 
     socket
     |> assign(:page_title, "New Task")

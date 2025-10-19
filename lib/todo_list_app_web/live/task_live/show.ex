@@ -33,7 +33,8 @@ defmodule TodoListAppWeb.TaskLive.Show do
   @impl true
   def mount(%{"id" => id}, _session, socket) do
     if connected?(socket) do
-      Todos.subscribe_tasks(socket.assigns.current_scope)
+      # Todos.subscribe_tasks(socket.assigns.current_scope)
+      Todos.subscribe_tasks()
     end
 
     {:ok,
