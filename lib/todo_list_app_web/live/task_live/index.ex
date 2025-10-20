@@ -9,11 +9,14 @@ defmodule TodoListAppWeb.TaskLive.Index do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <div class="mb-4">
-        <.form for={%{}} phx-submit="search">
-          <.input name="tags" label="Filter by tags (comma separated)" value="" />
-          <div class="mt-2">
-            <.button>Filter</.button>
-          </div>
+        <.form for={%{}} phx-change="search" id="tag-filter-form" class="mb-4">
+          <.input
+            name="tags"
+            label="Filter by tags (comma separated)"
+            value=""
+            id="tag-filter-input"
+            class="w-full px-4 py-2 rounded-xl border border-gray-600 focus:border-blue-500 transition-all duration-200"
+          />
         </.form>
       </div>
 
@@ -83,9 +86,14 @@ defmodule TodoListAppWeb.TaskLive.Index do
       |> Enum.map(&String.trim/1)
       |> Enum.reject(&(&1 == ""))
 
-    # Pass current_scope for filtering, update as needed for your context
-    tasks = TodoListApp.Todos.list_tasks(%{tags: tags, scope: socket.assigns.current_scope})
-    # {:noreply, assign(socket, :tasks, tasks)}
+    tasks =
+      if tags == [] do
+        # Reset to all tasks if no tags are entered
+        Todos.list_tasks(socket.assigns.current_scope)
+      else
+        Todos.list_tasks(%{tags: tags, scope: socket.assigns.current_scope})
+      end
+
     {:noreply, stream(socket, :tasks, tasks, reset: true)}
   end
 
