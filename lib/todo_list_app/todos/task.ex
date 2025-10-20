@@ -33,7 +33,7 @@ defmodule TodoListApp.Todos.Task do
       on_replace: :delete
 
     many_to_many :assignees, TodoListApp.Accounts.User,
-      join_through: "task_assignments",
+      join_through: TodoListApp.Todos.TaskAssignment,
       on_replace: :delete
 
     timestamps(type: :utc_datetime)

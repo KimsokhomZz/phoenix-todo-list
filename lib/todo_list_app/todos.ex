@@ -63,7 +63,14 @@ defmodule TodoListApp.Todos do
   # end
   def get_task!(scope, id) do
     user_id = scope.user.id
-    Repo.get_by!(Task, id: id, creator_id: user_id)
+
+    Repo.one!(
+      from t in Task,
+        left_join: a in assoc(t, :assignees),
+        where: t.id == ^id and (t.creator_id == ^user_id or a.id == ^user_id),
+        preload: [:assignees, :tags],
+        distinct: true
+    )
   end
 
   @doc """

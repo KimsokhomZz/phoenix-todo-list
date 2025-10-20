@@ -9,9 +9,10 @@ defmodule TodoListApp.Accounts.User do
     field :confirmed_at, :utc_datetime
     field :authenticated_at, :utc_datetime, virtual: true
 
-    timestamps(type: :utc_datetime)
+    many_to_many :assigned_tasks, TodoListApp.Todos.Task,
+      join_through: TodoListApp.Todos.TaskAssignment
 
-    many_to_many :assigned_tasks, TodoListApp.Todos.Task, join_through: "task_assignments"
+    timestamps(type: :utc_datetime)
   end
 
   @doc """
