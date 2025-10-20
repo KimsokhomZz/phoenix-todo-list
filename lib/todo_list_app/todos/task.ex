@@ -42,6 +42,6 @@ defmodule TodoListApp.Todos.Task do
   def changeset(task, attrs) do
     task
     |> cast(attrs, [:title, :description, :due_date, :status, :creator_id])
-    |> validate_required([:title, :status])
+    |> validate_required([:title, :description, :due_date, :status])
   end
 end

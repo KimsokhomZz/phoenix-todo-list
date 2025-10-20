@@ -14,7 +14,7 @@ defmodule TodoListAppWeb.TaskLive.Form do
           <h1 class="text-3xl font-bold text-white mb-2">{@page_title}</h1>
           <p class="text-gray-400">Create and manage your tasks efficiently</p>
         </div>
-
+        
     <!-- Main Form Card -->
         <div class="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
           <.form
@@ -34,7 +34,7 @@ defmodule TodoListAppWeb.TaskLive.Form do
                 class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
               />
             </div>
-
+            
     <!-- Description Field -->
             <div class="space-y-2">
               <label class="block text-sm font-medium text-gray-300 mb-2">Description</label>
@@ -45,7 +45,7 @@ defmodule TodoListAppWeb.TaskLive.Form do
                 class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 min-h-[120px] resize-y"
               >{Ecto.Changeset.get_field(@form.source, :description)}</textarea>
             </div>
-
+            
     <!-- Due Date Field -->
             <div class="space-y-2">
               <.input
@@ -55,7 +55,7 @@ defmodule TodoListAppWeb.TaskLive.Form do
                 class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
               />
             </div>
-
+            
     <!-- Tags Field -->
             <div class="space-y-2">
               <label class="block text-sm font-medium text-gray-300 mb-2">
@@ -73,7 +73,7 @@ defmodule TodoListAppWeb.TaskLive.Form do
                 Separate multiple tags with commas
               </p>
             </div>
-
+            
     <!-- Status Field -->
             <div class="space-y-2">
               <label class="block text-sm font-medium text-gray-300 mb-2">
@@ -83,7 +83,6 @@ defmodule TodoListAppWeb.TaskLive.Form do
                 <select
                   name="task[status]"
                   id="task_status"
-                  phx-change="validate"
                   class={[
                     "w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white",
                     "focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none",
@@ -97,13 +96,13 @@ defmodule TodoListAppWeb.TaskLive.Form do
                   </option>
                   <option value="done" selected={@form.data.status == :done}>✅ Completed</option>
                 </select>
-
+                
     <!-- Custom dropdown arrow -->
                 <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                   <.icon name="hero-chevron-down" class="w-5 h-5 text-gray-400" />
                 </div>
               </div>
-
+              
     <!-- Status indicator badges for visual feedback -->
               <div class="flex gap-2 mt-2">
                 <div class={[
@@ -135,7 +134,7 @@ defmodule TodoListAppWeb.TaskLive.Form do
                 </div>
               </div>
             </div>
-
+            
     <!-- Assignees Field -->
             <div class="space-y-2">
               <label class="block text-sm font-medium text-gray-300 mb-2">
@@ -174,7 +173,7 @@ defmodule TodoListAppWeb.TaskLive.Form do
                 Hold Ctrl/Cmd to select multiple team members
               </p>
             </div>
-
+            
     <!-- Action Buttons -->
             <div class="flex gap-4 pt-6 border-t border-gray-700">
               <.button
@@ -241,9 +240,19 @@ defmodule TodoListAppWeb.TaskLive.Form do
   end
 
   @impl true
-  def handle_event("validate", %{"task" => task_params}, socket) do
+  def handle_event("validate", %{"task" => task_params} = params, socket) do
     changeset = Todos.change_task(socket.assigns.current_scope, socket.assigns.task, task_params)
-    {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
+
+    tag_names_input = Map.get(params, "tag_names_input", socket.assigns.tag_names_input || "")
+
+    selected_assignee_ids =
+      Map.get(task_params, "assignee_ids", []) |> Enum.map(&String.to_integer/1)
+
+    {:noreply,
+     socket
+     |> assign(:form, to_form(changeset, action: :validate))
+     |> assign(:tag_names_input, tag_names_input)
+     |> assign(:selected_assignee_ids, selected_assignee_ids)}
   end
 
   def handle_event("save", %{"task" => task_params} = params, socket) do
